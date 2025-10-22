@@ -1,13 +1,4 @@
-"# HackerRank Solutions" 
- 
-"?? My solutions to HackerRank coding challenges. A collection of efficient algorithms and data structures implementations." 
- 
-"## ?? Structure" 
-"- **SQL/** - Database query solutions" 
-"- **Algorithms/** - Algorithmic problem solutions" 
-"- **Data-Structures/** - Data structure implementations" 
- 
-"## ?? Languages" 
-"- SQL" 
-"- Python" 
-"- Java" 
+🧠 SQL HackerRank Solutions
+
+This repository contains my solutions to various HackerRank SQL challenges, solved using MySQL.
+It serves as a collection of practice queries covering everything from basic SELECT statements to complex joins and subqueries.
