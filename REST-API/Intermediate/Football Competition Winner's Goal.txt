@@ -1,0 +1,123 @@
+'use strict';
+
+const fs = require('fs');
+const https = require('https');
+
+process.stdin.resume();
+process.stdin.setEncoding('utf-8');
+
+let inputString = '';
+let currentLine = 0;
+
+process.stdin.on('data', function(inputStdin) {
+    inputString += inputStdin;
+});
+
+process.stdin.on('end', function() {
+    inputString = inputString.split('\n');
+    main();
+});
+
+function readLine() {
+    return inputString[currentLine++];
+}
+
+// Helper function to make HTTP requests
+function fetch(url) {
+    return new Promise((resolve, reject) => {
+        https.get(url, (res) => {
+            let data = '';
+            res.on('data', (chunk) => data += chunk);
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(data));
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }).on('error', reject);
+    });
+}
+
+/*
+ * Complete the 'getWinnerTotalGoals' function below.
+ *
+ * The function is expected to return an INTEGER.
+ * The function accepts following parameters:
+ *  1. STRING competition
+ *  2. INTEGER year
+ */
+
+async function getWinnerTotalGoals(competition, year) {
+    try {
+        console.log(`Starting with competition: ${competition}, year: ${year}`);
+        
+        let goals = [];
+        for (let i = 0; i <= 10; i++)
+            goals.push(i);
+
+        let ans = 0;
+        
+        // Get the winner
+        console.log('Fetching competition data...');
+        let compUrl = `https://jsonmock.hackerrank.com/api/football_competitions?name=${encodeURIComponent(competition)}&year=${year}`;
+        console.log('Competition URL:', compUrl);
+        
+        let response = await fetch(compUrl);
+        console.log('Competition response received');
+        
+        if (!response.data || response.data.length === 0) {
+            console.log('No competition data found');
+            return 0;
+        }
+        
+        let winner = response.data[0].winner;
+        console.log('Winner found:', winner);
+
+        // Get goals when winner was team1
+        console.log('Fetching team1 goals...');
+        for (let goal of goals) {
+            const url = `https://jsonmock.hackerrank.com/api/football_matches?competition=${encodeURIComponent(competition)}&year=${year}&team1=${encodeURIComponent(winner)}&team1goals=${goal}`;
+            console.log(`Fetching team1 goals=${goal}: ${url}`);
+            
+            const team1Response = await fetch(url);
+            console.log(`Team1 goals=${goal}: found ${team1Response.total} matches`);
+            
+            ans += team1Response.total * goal;
+        }
+        
+        // Get goals when winner was team2
+        console.log('Fetching team2 goals...');
+        for (let goal of goals) {
+            const url = `https://jsonmock.hackerrank.com/api/football_matches?competition=${encodeURIComponent(competition)}&year=${year}&team2=${encodeURIComponent(winner)}&team2goals=${goal}`;
+            console.log(`Fetching team2 goals=${goal}: ${url}`);
+            
+            const team2Response = await fetch(url);
+            console.log(`Team2 goals=${goal}: found ${team2Response.total} matches`);
+            
+            ans += team2Response.total * goal;
+        }
+        
+        console.log('Total goals calculated:', ans);
+        return ans;
+        
+    } catch (error) {
+        console.log('Error occurred:', error.message);
+        return 0;
+    }
+}
+
+async function main() {
+    try {
+        const ws = fs.createWriteStream(process.env.OUTPUT_PATH);
+        const competition = readLine();
+        const year = parseInt(readLine().trim(), 10);
+        console.log('Reading input - competition:', competition, 'year:', year);
+        const result = await getWinnerTotalGoals(competition, year);
+        console.log('Final result:', result);
+        ws.write(result + '\n');
+        ws.end();
+    } catch (error) {
+        console.log('Main function error:', error);
+    }
+}

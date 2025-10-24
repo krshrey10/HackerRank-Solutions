@@ -1,0 +1,101 @@
+using System.CodeDom.Compiler;
+using System.Collections.Generic;
+using System.Collections;
+using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Text.RegularExpressions;
+using System.Text;
+using System;
+
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+
+
+class Result
+{
+          public static int getNumDraws(int year)
+    {
+        return GetNumDrawsAsync(year).GetAwaiter().GetResult();
+    }
+    
+    private static async Task<int> GetNumDrawsAsync(int year)
+    {
+        int totalDraws = 0;
+        using (HttpClient client = new HttpClient())
+        {
+            // Since no team scores more than 10 goals, iterate through all possible goal counts
+            for (int goals = 0; goals <= 10; goals++)
+            {
+                totalDraws += await GetMatchesWithScoreAsync(client, year, goals);
+            }
+        }
+        return totalDraws;
+    }
+    
+    private static async Task<int> GetMatchesWithScoreAsync(HttpClient client, int year, int goals)
+    {
+        try
+        {
+            string url = $"https://jsonmock.hackerrank.com/api/football_matches?year={year}&team1goals={goals}&team2goals={goals}";
+            
+            HttpResponseMessage response = await client.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            
+            string json = await response.Content.ReadAsStringAsync();
+            
+            // Manual JSON parsing to avoid dependency issues
+            int totalIndex = json.IndexOf("\"total\":");
+            if (totalIndex != -1)
+            {
+                int start = totalIndex + 8; // After "\"total\":"
+                int end = json.IndexOf(",", start);
+                if (end == -1) end = json.IndexOf("}", start);
+                
+                if (end != -1)
+                {
+                    string totalStr = json.Substring(start, end - start).Trim();
+                    if (int.TryParse(totalStr, out int total))
+                    {
+                        return total;
+                    }
+                }
+            }
+            return 0;
+        }
+        catch (Exception)
+        {
+            return 0;
+        }
+    }
+}
+
+
+    /*
+     * Complete the 'getNumDraws' function below.
+     *
+     * The function is expected to return an INTEGER.
+     * The function accepts INTEGER year as parameter.
+     */
+
+class Solution
+{
+    public static void Main(string[] args)
+    {
+        TextWriter textWriter = new StreamWriter(@System.Environment.GetEnvironmentVariable("OUTPUT_PATH"), true);
+
+        int year = Convert.ToInt32(Console.ReadLine().Trim());
+
+        int result = Result.getNumDraws(year);
+
+        textWriter.WriteLine(result);
+
+        textWriter.Flush();
+        textWriter.Close();
+    }
+}
